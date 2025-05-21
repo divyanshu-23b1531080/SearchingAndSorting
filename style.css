@@ -1,0 +1,20 @@
+.navbar {
+    box-shadow: 0 2px 4px green;
+}
+
+/* Sidebar */
+.sidebar {
+    min-height: 100vh;
+    padding: 15px;
+}
+
+/* Buttons inside Sidebar */
+.sidebar button {
+    width: 100%;
+    text-align: center;
+}
+
+/* Button Hover Effects */
+.btn-light:hover {
+    background-color: #ddd;
+}
