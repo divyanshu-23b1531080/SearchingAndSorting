@@ -7,13 +7,6 @@ let timeouts = []; // Track active timeouts
 let linearColors = []; // Separate colors for Linear Search
 let binaryColors = []; // Separate colors for Binary Search
 
-document.getElementById("main-content").addEventListener("click", function (event) {
-    if (event.target.id === "start") {
-        console.log("Run button clicked! ✅");
-        startSearching();
-    }
-});
-
 function startSearching() {
     stopFlag = true; // Stop ongoing searches
     clearAllTimeouts(); // Cancel existing timeouts before starting new one
