@@ -4,6 +4,8 @@ let binaryFound = false;
 let dataList = [];
 let targetElement = 0;
 let timeouts = []; // Track active timeouts
+let linearColors = []; // Separate colors for Linear Search
+let binaryColors = []; // Separate colors for Binary Search
 
 document.getElementById("main-content").addEventListener("click", function (event) {
     if (event.target.id === "start") {
@@ -14,7 +16,7 @@ document.getElementById("main-content").addEventListener("click", function (even
 
 function startSearching() {
     stopFlag = true; // Stop ongoing searches
-    clearAllTimeouts(); //  Cancel existing timeouts before starting new one
+    clearAllTimeouts(); // Cancel existing timeouts before starting new one
 
     setTimeout(() => {
         stopFlag = false;
@@ -26,8 +28,8 @@ function startSearching() {
 
 // Function to clear all active timeouts
 function clearAllTimeouts() {
-    timeouts.forEach(clearTimeout); // Cancel all stored timeouts
-    timeouts = []; // Reset timeout array
+    timeouts.forEach(clearTimeout);
+    timeouts = [];
 }
 
 function executeSearch() {
@@ -38,64 +40,49 @@ function executeSearch() {
     try {
         if (!displayList || isNaN(targetElement)) throw new Error("Ensure both input fields are filled!");
         dataList = displayList.split(",").map(Number);
+        linearColors = new Array(dataList.length).fill("blue"); // Separate color array for Linear Search
+        binaryColors = new Array(dataList.length).fill("blue"); // Separate color array for Binary Search
     } catch (error) {
         resultBox.textContent = "Error: Invalid input!";
         return;
     }
 
-    let dataLength = dataList.length;
-    let unsortedList = [...dataList]; // DO NOT SORT (binary search fails)
-    let linearColors = new Array(dataLength).fill("blue");
-    let binaryColors = new Array(dataLength).fill("blue");
-
-    let chartData = (data, colors) => [{
-        x: Array.from({ length: dataLength }, (_, i) => i + 1),
-        y: data,
-        type: "bar",
-        marker: { color: colors },
-    }];
-
     let layout = {
-        xaxis: { title: "Values", type: "category", tickvals: Array.from({ length: dataLength }, (_, i) => i + 1), ticktext: dataList },
-        yaxis: { showticklabels: false, zeroline: false, showgrid: false },
+        yaxis: { title: "Index Positions", tickvals: Array.from({ length: dataList.length }, (_, i) => i + 1), ticktext: dataList },
+        xaxis: { showticklabels: false, zeroline: false, showgrid: false },
         bargap: 0.2,
         barmode: "group",
     };
 
-    Plotly.newPlot("linearChart", chartData(dataList, linearColors), layout);
-    Plotly.newPlot("binaryChart", chartData(unsortedList, binaryColors), layout);
+    Plotly.newPlot("linearChart", [{ x: dataList, y: Array.from({ length: dataList.length }, (_, i) => i + 1), type: "bar", orientation: "h", marker: { color: linearColors } }], layout);
+    Plotly.newPlot("binaryChart", [{ x: dataList, y: Array.from({ length: dataList.length }, (_, i) => i + 1), type: "bar", orientation: "h", marker: { color: binaryColors } }], layout);
 
     visualizeLinearSearch(0);
-    visualizeBinarySearch(0, dataLength - 1);
+    visualizeBinarySearch(0, dataList.length - 1);
 }
 
-// Optimized Linear Search with Timeout Tracking
+// Optimized Linear Search for Horizontal Bars
 function visualizeLinearSearch(index) {
     if (stopFlag || index >= dataList.length) return;
 
-    let colors = new Array(dataList.length).fill("blue");
-    colors[index] = "red";
-    Plotly.restyle("linearChart", "marker.color", [colors]);
-
-    if (dataList[index] === targetElement) {
-        let timeout = setTimeout(() => {
-            if (stopFlag) return;
-            colors[index] = "black";
-            Plotly.restyle("linearChart", "marker.color", [colors]);
-            linearFound = true;
-            updateResultBox();
-        }, 800);
-        timeouts.push(timeout); // Track timeout
-        return;
-    }
+    linearColors[index] = "red";  // Keep searched index red
+    Plotly.restyle("linearChart", { "marker.color": [linearColors] });
 
     let timeout = setTimeout(() => {
-        if (!stopFlag) visualizeLinearSearch(index + 1);
+        if (stopFlag) return;
+        if (dataList[index] === targetElement) {
+            linearColors[index] = "black";  // Mark found element
+            Plotly.restyle("linearChart", { "marker.color": [linearColors] });
+            linearFound = true;
+            updateResultBox();
+        } else {
+            visualizeLinearSearch(index + 1);
+        }
     }, 800);
-    timeouts.push(timeout); // Track timeout
+    timeouts.push(timeout);
 }
 
-// Optimized Binary Search with Timeout Tracking
+// Optimized Binary Search for Horizontal Bars
 function visualizeBinarySearch(left, right) {
     if (stopFlag || left > right) {
         updateResultBox();
@@ -103,28 +90,23 @@ function visualizeBinarySearch(left, right) {
     }
 
     let mid = Math.floor((left + right) / 2);
-    let colors = new Array(dataList.length).fill("blue");
-    colors[mid] = "green";
-    Plotly.restyle("binaryChart", "marker.color", [colors]);
+    binaryColors[mid] = "red";  // Keep searched index red
+    Plotly.restyle("binaryChart", { "marker.color": [binaryColors] });
 
     let timeout = setTimeout(() => {
         if (stopFlag) return;
-
         if (dataList[mid] === targetElement) {
-            colors[mid] = "black";
-            Plotly.restyle("binaryChart", "marker.color", [colors]);
+            binaryColors[mid] = "black";  // Mark found element
+            Plotly.restyle("binaryChart", { "marker.color": [binaryColors] });
             binaryFound = true;
             updateResultBox();
-            return;
-        }
-
-        if (dataList[mid] < targetElement) {
-            if (!stopFlag) visualizeBinarySearch(mid + 1, right);
+        } else if (dataList[mid] < targetElement) {
+            visualizeBinarySearch(mid + 1, right);
         } else {
-            if (!stopFlag) visualizeBinarySearch(left, mid - 1);
+            visualizeBinarySearch(left, mid - 1);
         }
     }, 800);
-    timeouts.push(timeout); // Track timeout
+    timeouts.push(timeout);
 }
 
 // Updated Result Box Handling
