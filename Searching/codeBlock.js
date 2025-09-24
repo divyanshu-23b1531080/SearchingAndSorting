@@ -124,9 +124,3 @@ function switchBinaryCode(language) {
     codeBlock.className = `language-${language}`;
     hljs.highlightElement(codeBlock);
 }
-
-// Initialize with JavaScript code
-document.addEventListener("DOMContentLoaded", () => {
-    switchLinearCode('javascript');
-    switchBinaryCode('javascript');
-});
